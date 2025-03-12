@@ -15,7 +15,9 @@ def getData(stocks, start, end):
             if data.empty:
                 print(f"No data found for {stock}")
             else:
+                #extract the "closing" price at the end of each day
                 stock_data[stock] = data[['Close']]
+                #how much the stock changed from one day to next
                 returns_data[stock] = stock_data[stock]['Close'].pct_change()  # Compute daily returns
                 
         except Exception as e:
@@ -29,30 +31,39 @@ def getData(stocks, start, end):
     returns_df = pd.concat(returns_data, axis=1)
 
     # Compute mean returns and covariance matrix
-    meanReturns = returns_df.mean()
-    covMatrix = returns_df.cov()
+    meanReturns = returns_df.mean() #average daily return for each stock 
+    covMatrix = returns_df.cov() #how different stocks move in relation to each other 
 
     return meanReturns, covMatrix
 
-# Function to calculate portfolio performance
+#annualized return tells how much you can expect to grow in a year
+#higher the std, the riskier it is 
 def portfolioPerformance(weights, meanReturns, covMatrix):
     returns = np.sum(meanReturns * weights) * 252  # Trading days in a year
     std = np.sqrt(np.dot(weights.T, np.dot(covMatrix, weights))) * np.sqrt(252)
     return returns, std
 
+#sharp ratio - how much return above risk-free rate you get per unit of risk 
+#high sharp ratio = better [YOU KNOW WHY ^^^]
 def negativeSR(weights, meanReturns, covMatrix, riskFreeRate=0):
     pReturns, pStd = portfolioPerformance(weights, meanReturns, covMatrix)
     return -(pReturns - riskFreeRate)/pStd
 
+#we minimize negSharpRatio to maximize Sharp Ratio
+#constraight np.sum to 1 so we are fully invested 
+#bounds so that no short-selling is allowed
+#return how much money we should allocate to each asset [given average returns and covariences]
 def maxSR(meanReturns, covMatrix, riskFreeRate=0, constraintSet=(0,1)):
     numAssets = len(meanReturns)
     args = (meanReturns, covMatrix, riskFreeRate)
+    # 'eq' = equation; 'fun' = function
     constraints = ({'type': 'eq', 'fun' : lambda x: np.sum(x)-1})
     bounds = tuple(constraintSet for asset in range(numAssets))
     result = sc.optimize.minimize(
-        fun=negativeSR, 
-        x0=[1./numAssets]*numAssets, 
+        fun=negativeSR,  
+        x0=[1./numAssets]*numAssets, #optimal weights 
         args=args,
+        #SLSP - Squential Least Square Programming 
         method='SLSQP', 
         bounds=bounds, 
         constraints=constraints
@@ -83,8 +94,9 @@ if meanReturns is not None:
     # Calculate the performance of the optimal weights
     opt_returns, opt_std = portfolioPerformance(opt_weights, meanReturns, covMatrix)
     
-    print(f"Expected Annual Return: {round(returns * 100, 2)}%")
+    print(f"Expected Annual Return: {round(returns * 100, 2)}%") #based on your weights
     print(f"Expected Annual Volatility (Risk): {round(std * 100, 2)}%")
-    print(f"Expected Maximum Returns: {round(opt_returns * 100, 2)}%")
+    #Expected Maxmimum Returns - based on max weights 
+    print(f"Expected Maximum Returns: {round(opt_returns * 100, 2)}%") 
 else:
     print("No stock return data available.")

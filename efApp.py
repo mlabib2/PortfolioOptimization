@@ -99,4 +99,5 @@ if meanReturns is not None:
     #Expected Maxmimum Returns - based on max weights 
     print(f"Expected Maximum Returns: {round(opt_returns * 100, 2)}%") 
 else:
+    
     print("No stock return data available.")

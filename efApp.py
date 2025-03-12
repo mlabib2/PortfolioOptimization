@@ -2,6 +2,7 @@ import numpy as np
 import datetime as dt
 import yfinance as yf
 import pandas as pd
+import scipy as sc
 
 # Function to fetch stock data
 def getData(stocks, start, end):
@@ -39,6 +40,27 @@ def portfolioPerformance(weights, meanReturns, covMatrix):
     std = np.sqrt(np.dot(weights.T, np.dot(covMatrix, weights))) * np.sqrt(252)  # ✅ FIXED: Use `covMatrix`
     return returns, std
 
+def negativeSR(weights, meanReturns, covMatrix, riskFreeRate=0):
+    pReturns, pStd = portfolioPerformance(weights,meanReturns,covMatrix)
+    return -(pReturns - riskFreeRate)/pStd
+
+def maxSR(meanReturns, covMatrix, riskFreeRate=0, constraintSet=(0,1)):
+    # Minimize the negative SR = maximize SR by altering weights of the portfolios 
+    numAssets = len(meanReturns)
+    args = (meanReturns, covMatrix, riskFreeRate)
+    constraints = ({'type': 'eq', 'fun' : lambda x: np.sum(x)-1})
+    bounds = constraintSet
+    bounds = tuple(bounds for asset in range(numAssets))
+    result = sc.optimize.minimize(
+    fun=negativeSR, 
+    x0=[1./numAssets]*numAssets, 
+    args=args,
+    method='SLSQP', 
+    bounds=bounds, 
+    constraints=constraints)
+
+    return result
+
 # Define stock list with Australian market symbols
 stocklist = ['CBA', 'BHP', 'TLS']
 stocks = [s + '.AX' for s in stocklist]  # Append '.AX' for ASX stocks
@@ -52,11 +74,11 @@ weights = np.array([0.3, 0.3, 0.4])
 
 # Fetch stock data
 meanReturns, covMatrix = getData(stocks, startDate, endDate)
-
-# Calculate and print portfolio performance
 if meanReturns is not None:
     returns, std = portfolioPerformance(weights, meanReturns, covMatrix)
+    results = maxSR(meanReturns, covMatrix)
     print(f"Expected Annual Return: {round(returns * 100, 2)}%")
     print(f"Expected Annual Volatility (Risk): {round(std * 100, 2)}%")
+    print(f"Expected Maximum Returns: {round(results * 100, 2)}%")
 else:
     print("No stock return data available.")

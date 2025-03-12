@@ -71,6 +71,29 @@ def maxSR(meanReturns, covMatrix, riskFreeRate=0, constraintSet=(0,1)):
 
     return result
 
+def portfolioVariance(weight, meanReturns, covMatrix):
+    _, std = portfolioPerformance(weights, meanReturns, covMatrix)
+    return std #second parameter is the standard deviation
+
+#since std is the sqrt of var - it means we essentially minimize var when we minimize std
+def minimizeVariance(meanReturns, covMatrix, constraintSet=(0,1)): #notice no risk free rate here
+    "Minimize portfolio variance by altering weights / allocation of assets in portfolio"
+    numAssets = len(meanReturns)
+    args = (meanReturns, covMatrix)
+    # 'eq' = equation; 'fun' = function
+    constraints = ({'type': 'eq', 'fun' : lambda x: np.sum(x)-1})
+    bounds = tuple(constraintSet for asset in range(numAssets)) #allocation can be  0-100%
+    result = sc.optimize.minimize(
+        fun=portfolioVariance, #we minimize variance = minimize std 
+        x0=[1./numAssets]*numAssets, #optimal weights 
+        args=args,
+        #SLSP - Squential Least Square Programming 
+        method='SLSQP', 
+        bounds=bounds, 
+        constraints=constraints
+    )
+    return result
+
 # Define stock list with Australian market symbols
 stocklist = ['CBA', 'BHP', 'TLS']
 stocks = [s + '.AX' for s in stocklist]  # Append '.AX' for ASX stocks
@@ -103,6 +126,11 @@ if meanReturns is not None:
     maxSR, maxWeights = result['fun'],result['x']
     print("Optimal weights:", maxSR)
     print("Final negative SR:", maxWeights)
+
+    minvarResult = minimizeVariance(meanReturns, covMatrix)
+    minVar, minvarWeights = minvarResult['fun'], minvarResult ['x']
+    print("Minimum Variance ", minVar)
+    print("Final Min Variance Weight ", minvarWeights)
 else:
 
     print("No stock return data available.")

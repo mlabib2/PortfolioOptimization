@@ -93,11 +93,16 @@ if meanReturns is not None:
     
     # Calculate the performance of the optimal weights
     opt_returns, opt_std = portfolioPerformance(opt_weights, meanReturns, covMatrix)
-    
+
     print(f"Expected Annual Return: {round(returns * 100, 2)}%") #based on your weights
     print(f"Expected Annual Volatility (Risk): {round(std * 100, 2)}%")
-    #Expected Maxmimum Returns - based on max weights 
+    "Expected Maxmimum Returns - based on max weights"
     print(f"Expected Maximum Returns: {round(opt_returns * 100, 2)}%") 
+    # print(results)
+    result = maxSR(meanReturns, covMatrix)
+    maxSR, maxWeights = result['fun'],result['x']
+    print("Optimal weights:", maxSR)
+    print("Final negative SR:", maxWeights)
 else:
-    
+
     print("No stock return data available.")

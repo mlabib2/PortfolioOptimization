@@ -37,27 +37,26 @@ def getData(stocks, start, end):
 # Function to calculate portfolio performance
 def portfolioPerformance(weights, meanReturns, covMatrix):
     returns = np.sum(meanReturns * weights) * 252  # Trading days in a year
-    std = np.sqrt(np.dot(weights.T, np.dot(covMatrix, weights))) * np.sqrt(252)  # ✅ FIXED: Use `covMatrix`
+    std = np.sqrt(np.dot(weights.T, np.dot(covMatrix, weights))) * np.sqrt(252)
     return returns, std
 
 def negativeSR(weights, meanReturns, covMatrix, riskFreeRate=0):
-    pReturns, pStd = portfolioPerformance(weights,meanReturns,covMatrix)
+    pReturns, pStd = portfolioPerformance(weights, meanReturns, covMatrix)
     return -(pReturns - riskFreeRate)/pStd
 
 def maxSR(meanReturns, covMatrix, riskFreeRate=0, constraintSet=(0,1)):
-    # Minimize the negative SR = maximize SR by altering weights of the portfolios 
     numAssets = len(meanReturns)
     args = (meanReturns, covMatrix, riskFreeRate)
     constraints = ({'type': 'eq', 'fun' : lambda x: np.sum(x)-1})
-    bounds = constraintSet
-    bounds = tuple(bounds for asset in range(numAssets))
+    bounds = tuple(constraintSet for asset in range(numAssets))
     result = sc.optimize.minimize(
-    fun=negativeSR, 
-    x0=[1./numAssets]*numAssets, 
-    args=args,
-    method='SLSQP', 
-    bounds=bounds, 
-    constraints=constraints)
+        fun=negativeSR, 
+        x0=[1./numAssets]*numAssets, 
+        args=args,
+        method='SLSQP', 
+        bounds=bounds, 
+        constraints=constraints
+    )
 
     return result
 
@@ -77,8 +76,15 @@ meanReturns, covMatrix = getData(stocks, startDate, endDate)
 if meanReturns is not None:
     returns, std = portfolioPerformance(weights, meanReturns, covMatrix)
     results = maxSR(meanReturns, covMatrix)
+    
+    # Get the optimal weights from the optimizer result
+    opt_weights = results.x
+    
+    # Calculate the performance of the optimal weights
+    opt_returns, opt_std = portfolioPerformance(opt_weights, meanReturns, covMatrix)
+    
     print(f"Expected Annual Return: {round(returns * 100, 2)}%")
     print(f"Expected Annual Volatility (Risk): {round(std * 100, 2)}%")
-    print(f"Expected Maximum Returns: {round(results * 100, 2)}%")
+    print(f"Expected Maximum Returns: {round(opt_returns * 100, 2)}%")
 else:
     print("No stock return data available.")

@@ -43,6 +43,11 @@ def portfolioPerformance(weights, meanReturns, covMatrix):
     std = np.sqrt(np.dot(weights.T, np.dot(covMatrix, weights))) * np.sqrt(252)
     return returns, std
 
+def portfolioVariance(weights, meanReturns, covMatrix):
+    _, std = portfolioPerformance(weights, meanReturns, covMatrix)
+    return std**2 #second parameter is the standard deviation
+
+
 #sharp ratio - how much return above risk-free rate you get per unit of risk 
 #high sharp ratio = better [YOU KNOW WHY ^^^]
 def negativeSR(weights, meanReturns, covMatrix, riskFreeRate=0):
@@ -71,9 +76,6 @@ def maxSR(meanReturns, covMatrix, riskFreeRate=0, constraintSet=(0,1)):
 
     return result
 
-def portfolioVariance(weight, meanReturns, covMatrix):
-    _, std = portfolioPerformance(weights, meanReturns, covMatrix)
-    return std #second parameter is the standard deviation
 
 #since std is the sqrt of var - it means we essentially minimize var when we minimize std
 def minimizeVariance(meanReturns, covMatrix, constraintSet=(0,1)): #notice no risk free rate here
@@ -93,6 +95,27 @@ def minimizeVariance(meanReturns, covMatrix, constraintSet=(0,1)): #notice no ri
         constraints=constraints
     )
     return result
+
+def calculatedResults(meanReturns, covMatrix, riskFreeRate=0, constraintSet=(0,1)):
+    #Max Sharp Ratio Portfolio 
+    """Read in mean, cov matrix, and other financial information 
+        Output MaxSR, Min Volatility, efficient frontier"""
+    
+    #Max Sharp ratio portfolio - highest return per risk
+    maxSR_Portfolio = maxSR(meanReturns, covMatrix)
+    maxSR_Returns, maxSR_std = portfolioPerformance(maxSR_Portfolio['x'], meanReturns, covMatrix) #maxSR_Return = best estiamte of annual return; #maxsr_Std = annulized risk volatility 
+    maxSR_Returns, maxSR_std = round(maxSR_Returns*100,2), round(maxSR_std*100,2)
+    maxSR_Allocation = pd.DataFrame(maxSR_Portfolio['x'], index = meanReturns.index, columns = ['allocation'])
+    maxSR_Allocation.allocation = [round(i*100,0) for i in maxSR_Allocation.allocation] #
+
+    #min volatility portfolio 
+    minVol_Portfolio = minimizeVariance(meanReturns, covMatrix) 
+    minVol_Returns, minVol_std = portfolioPerformance(minVol_Portfolio['x'], meanReturns, covMatrix)
+    minVol_Returns, minVol_std = round(minVol_Returns*100,2), round(minVol_std*100,2)
+    minVol_Allocation = pd.DataFrame(minVol_Portfolio['x'], index = meanReturns.index, columns = ['allocation'])
+    minVol_Allocation.allocation = [round(i*100,0) for i in minVol_Allocation.allocation]    
+    return maxSR_Returns, maxSR_std, maxSR_Allocation, minVol_Returns, minVol_std, minVol_Allocation
+
 
 # Define stock list with Australian market symbols
 stocklist = ['CBA', 'BHP', 'TLS']
@@ -123,14 +146,19 @@ if meanReturns is not None:
     print(f"Expected Maximum Returns: {round(opt_returns * 100, 2)}%") 
     # print(results)
     result = maxSR(meanReturns, covMatrix)
-    maxSR, maxWeights = result['fun'],result['x']
-    print("Optimal weights:", maxSR)
+    maxSRvalue, maxWeights = result['fun'],result['x']
+    print("Optimal weights:", maxSRvalue)
     print("Final negative SR:", maxWeights)
 
     minvarResult = minimizeVariance(meanReturns, covMatrix)
     minVar, minvarWeights = minvarResult['fun'], minvarResult ['x']
     print("Minimum Variance ", minVar)
     print("Final Min Variance Weight ", minvarWeights)
+
+    print(calculatedResults(meanReturns, covMatrix))
 else:
 
     print("No stock return data available.")
+
+
+

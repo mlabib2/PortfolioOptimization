@@ -32,9 +32,9 @@ def getData(stocks, start, end):
 # 2. Portfolio Performance
 def portfolioPerformance(weights, meanReturns, covMatrix):
     returns = np.sum(meanReturns * weights) * 252
-    std = np.sqrt(np.dot(weights.T, np.dot(covMatrix, weights))) * np.sqrt(252)
+    std = np.sqrt(np.dot(weights.T, np.dot(covMatrix, weights))) * np.sqrt(252) #calculates risk volatility
     return returns, std
-
+    # 2. Portfolio Variance
 def portfolioVariance(weights, meanReturns, covMatrix):
     _, std = portfolioPerformance(weights, meanReturns, covMatrix)
     return std**2

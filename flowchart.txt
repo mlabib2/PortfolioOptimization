@@ -1,0 +1,29 @@
+Main Script (start)
+│
+│───► getData(stocks, start, end)
+│        │
+│        └───► Outputs meanReturns, covMatrix
+│
+▼
+calculatedResults(meanReturns, covMatrix)
+│
+├───► maxSR(meanReturns, covMatrix)
+│       │
+│       └───► negativeSR(weights, ...)
+│              │
+│              └───► portfolioPerformance(weights)
+│                        │
+│                        └───► annualized returns, std deviation
+│
+└───► minimizeVariance(meanReturns, covMatrix)
+         │
+         └───► portfolioVariance(weights)
+                  │
+                  └───► portfolioPerformance(weights)
+                             │
+                             └───► calculates portfolio variance (minimizes risk)
+│
+▼
+Outputs
+- Max Sharpe Ratio Portfolio (best risk-to-return ratio)
+- Min Volatility Portfolio (safest allocation)

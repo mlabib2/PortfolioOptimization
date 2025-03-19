@@ -1,0 +1,55 @@
+Main Script (start)
+│
+│───► getData(stocks, start, end)
+│        │
+│        └───► Outputs meanReturns, covMatrix
+│
+▼
+calculatedResults(meanReturns, covMatrix)
+│
+├───► maxSR(meanReturns, covMatrix)
+│       │
+│       └───► negativeSR(weights, ...)
+│              │
+│              └───► portfolioPerformance(weights)
+│                        │
+│                        └───► annualized returns, std deviation
+│
+└───► minimizeVariance(meanReturns, covMatrix)
+         │
+         └───► portfolioVariance(weights)
+                  │
+                  └───► portfolioPerformance(weights)
+                             │
+                             └───► calculates portfolio variance (minimizes risk)
+│
+▼
+Outputs
+- Max Sharpe Ratio Portfolio (best risk-to-return ratio)
+- Min Volatility Portfolio (safest allocation)
+
+
+
+
+
+calculatedResults(meanReturns, covMatrix)
+│
+├── maxSR(meanReturns, covMatrix)
+│      └── negativeSR(weights, meanReturns, covMatrix, riskFreeRate)
+│           └── portfolioPerformance(weights, meanReturns, covMatrix)
+│                   ├─ returns (Annualized returns calculation)
+│                   └─ std (Annualized risk/volatility calculation)
+│
+│── minimizeVariance(meanReturns, covMatrix)
+│      └── portfolioVariance(weights, meanReturns, covMatrix)
+│           └── portfolioPerformance(weights, meanReturns, covMatrix)
+│                   ├─ returns (Annualized returns calculation)
+│                   └─ std (Annualized volatility calculation, squared to variance)
+│
+│── Compile both portfolio results into DataFrames:
+│     ├── maxSR_Allocation (optimal weights maximizing Sharpe ratio)
+│     └── minVol_Allocation (optimal weights minimizing variance)
+│
+└── **Return**:
+      - maxSR_Returns, maxSR_std, maxSR_Allocation  
+      - minVol_Returns, minVol_std, minVol_Allocation

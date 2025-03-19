@@ -1,93 +1,104 @@
+Portfolio Optimization with Efficient Frontier
+===============================================
 
-1. Daily Returns vs. Prices
-	•	What: You have a list of stock closing prices and you convert them into daily returns using pct_change().
-	•	Why:
-	1.	Returns (percentage changes) are a more direct measure of gains/losses and are needed for portfolio calculations.
-	2.	Prices alone don’t tell you how much you actually gained or lost on a day-to-day basis.
+Overview:
+---------
+This project uses historical stock data to perform portfolio optimization based on Modern Portfolio Theory.
+It calculates optimal asset allocations using two primary strategies:
+  - Maximum Sharpe Ratio Portfolio: Finds the portfolio with the best return per unit of risk.
+  - Minimum Variance Portfolio: Finds the portfolio with the lowest possible risk.
 
-⸻
+It also constructs the efficient frontier – a set of optimal portfolios for varying target returns – and
+displays the results using Plotly for interactive visualization.
 
-2. Mean Returns & Covariance Matrix
-	•	Mean Returns: The average of those daily returns for each asset (e.g., a stock) over a historical period.
-	•	Tells you the typical day-to-day gain or loss.
-	•	Covariance Matrix: Measures how each pair of stocks moves relative to one another.
-	•	Positive Covariance: When Stock A goes up, Stock B tends to go up too.
-	•	Negative Covariance: One goes up, the other goes down.
-	•	This matters for diversification—assets that move in different ways help reduce overall risk.
+Features:
+---------
+• Data Fetching:
+  - Uses yfinance to download historical daily closing prices.
+  - Calculates daily returns, average returns, and the covariance matrix.
 
-Big takeaway: Put these together (mean returns and covariance), and you can approximate how a portfolio might behave (in terms of risk and return).
+• Portfolio Performance:
+  - Computes annualized returns and volatility (risk) based on given weights.
+  - Calculates portfolio variance.
 
-⸻
+• Optimization:
+  - Maximizes Sharpe Ratio (by minimizing negative Sharpe Ratio).
+  - Minimizes portfolio variance for a safe (low-risk) allocation.
+  - Constructs an efficient frontier by optimizing for minimum variance at various target returns.
 
-3. Annualized Return & Volatility
-	1.	Annualized Return:
-	•	You see lines like returns * 252 because there are ~252 trading days in a year.
-	•	Multiply average daily returns by 252 to estimate a yearly return (e.g., 0.05% a day ~> ~12.6% a year).
-	2.	Annualized Volatility (Standard Deviation):
-	•	You calculate the daily standard deviation (via the covariance matrix) and then multiply by √252 to scale it up to a yearly figure.
-	•	The bigger the standard deviation, the more your returns might swing from day to day (higher “risk”).
+• Visualization:
+  - Uses Plotly to plot:
+      – The Maximum Sharpe Ratio portfolio.
+      – The Minimum Variance portfolio.
+      – The Efficient Frontier (showing optimal risk vs. return trade-offs).
 
-⸻
+Requirements:
+-------------
+- Python 3.7+
+- numpy
+- pandas
+- scipy
+- yfinance
+- plotly
 
-4. Sharpe Ratio
-	1.	Formula:
-\text{Sharpe Ratio} = \frac{(\text{Portfolio Return} - \text{Risk-Free Rate})}{\text{Volatility}}
-	2.	Concept:
-	•	Tells you the excess return (above some risk-free investment) per unit of risk (volatility).
-	•	A higher Sharpe means you’re getting more “bang” (return) for your “buck” (risk).
-	3.	Why “negativeSR”?
-	•	Optimization libraries typically minimize. To maximize Sharpe, you minimize -Sharpe.
+Installation:
+-------------
+1. Clone the repository:
+   git clone https://github.com/yourusername/portfolio-optimization.git
+   cd portfolio-optimization
 
-⸻
+2. (Optional) Create and activate a virtual environment:
+   python -m venv venv
+   source venv/bin/activate   (On Windows: venv\Scripts\activate)
 
-5. Maximizing the Sharpe Ratio
-	1.	Objective: “Highest risk-adjusted returns.”
-	2.	Constraints:
-	•	Sum of weights = 1 (fully invested).
-	•	Weights between 0 and 1 (no short-selling, no leverage).
-	3.	Result: The portfolio that does the best job balancing returns and risk.
+3. Install required packages:
+   pip install numpy pandas scipy yfinance plotly
 
-⸻
+Usage:
+------
+Run the main Python file (e.g., efApp.py) with:
+   python efApp.py
 
-6. Minimizing Variance
-	1.	Objective: “Lowest possible volatility,” ignoring how high or low the returns might be.
-	2.	Why It Matters:
-	•	Some investors prefer stable returns over chasing higher gains.
-	•	Minimizing variance is a classic approach to find the least risky portfolio.
+The script will:
+  • Fetch historical data for a set of example stocks (e.g., CBA.AX, BHP.AX, TLS.AX).
+  • Calculate portfolio performance based on user-defined weights.
+  • Optimize portfolios to determine the Maximum Sharpe Ratio and Minimum Variance portfolios.
+  • Construct and plot the efficient frontier using Plotly.
 
-⸻
+Code Overview:
+--------------
+1. Data Fetch (getData):
+   - Downloads stock prices, computes daily returns, and calculates mean returns and covariance matrix.
 
-7. Efficient Frontier
-	•	A graph showing all optimal portfolios—from the minimum variance one (lowest risk) up to the highest Sharpe one (best risk/reward ratio).
-	•	Every point on the frontier is considered efficient because it’s the best you can do for a given level of risk.
+2. Portfolio Performance (portfolioPerformance, portfolioVariance):
+   - Computes annualized returns and risk (volatility) for given allocations.
 
-⸻
+3. Optimization (maxSR, minimizeVariance):
+   - Finds optimal weights that maximize the Sharpe Ratio (using negativeSR) and minimize variance.
 
-8. Putting It All Together
-	1.	Fetch data → daily prices.
-	2.	Calculate returns + covariance.
-	3.	Run optimization:
-	•	Max Sharpe: Find the best ratio of (Return - RF) / Volatility.
-	•	Min Variance: Find the smallest standard deviation.
-	4.	Interpret the allocations:
-	•	If an asset gets a weight of 0%, it suggests that it doesn’t help the particular objective.
-	•	If an asset gets a large weight, it suggests it’s either high-return (for Sharpe) or low-risk (for Min Var), or has beneficial correlation patterns.
+4. Combined Results (calculatedResults):
+   - Aggregates results from both optimizations and builds an efficient frontier.
 
-⸻
+5. Visualization (EFGraph):
+   - Uses Plotly to graph the Maximum Sharpe and Minimum Variance portfolios along with the efficient frontier.
 
-9. Practical Insights
-	•	No Single “Right” Portfolio:
-	•	Max Sharpe is great if you can handle more risk for higher returns.
-	•	Min Variance is great if you hate volatility, but might yield lower returns.
-	•	Real-World Twists:
-	•	Transaction costs, taxes, or constraints on certain assets can change the optimization significantly.
-	•	Past performance doesn’t guarantee future returns, so these are estimates based on historical patterns.
+Customization:
+--------------
+- Modify the stock list in the main section to use different stocks or markets.
+- Adjust target returns in the efficientOpt function call to match your investment goals.
+- Change the constraint set if you want to allow short-selling or leverage.
 
-⸻
+Troubleshooting:
+----------------
+- If the Plotly graph does not display as expected, ensure you are using the correct Plotly version and that your layout is defined with go.Layout (capital L).
+- Verify stock symbols or date ranges if data is not returned by yfinance.
 
-Final Thoughts
+License:
+--------
+This project is licensed under the MIT License.
 
-These theoretical concepts—mean returns, covariance, Sharpe ratio, volatility, minimization of variance—form the basis of Modern Portfolio Theory. They help you strike a balance between risk (variance/volatility) and return (mean growth), so you can choose a portfolio that aligns with your risk tolerance and investment goals.
-
-
-
+Acknowledgements:
+-----------------
+- Data fetched using yfinance.
+- Optimization using SciPy.
+- Visualizations powered by Plotly.

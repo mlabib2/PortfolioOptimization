@@ -88,3 +88,6 @@ Big takeaway: Put these together (mean returns and covariance), and you can appr
 Final Thoughts
 
 These theoretical concepts—mean returns, covariance, Sharpe ratio, volatility, minimization of variance—form the basis of Modern Portfolio Theory. They help you strike a balance between risk (variance/volatility) and return (mean growth), so you can choose a portfolio that aligns with your risk tolerance and investment goals.
+
+
+

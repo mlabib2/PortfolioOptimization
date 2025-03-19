@@ -121,38 +121,40 @@ def efficientOpt(meanReturns, covMatrix, returnTarget, constraintSet= (0,1)):
     return effOpt
 
 def EFGraph(meanReturns, covMatrix, riskFreeRate=0, constraintSet=(0,1)):
-    # return the graph plotting the min col, max sr, and efficient Frontier
-    maxSR_Returns, maxSR_std, maxSR_Allocation, minVol_Returns, minVol_std, minVol_Allocation, efficientList, tagetReturns = calculatedResults(meanReturns, covMatrix, riskFreeRate, constraintSet)
-    #Max SR 
+    # Get results from calculatedResults
+    maxSR_Returns, maxSR_std, maxSR_Allocation, minVol_Returns, minVol_std, minVol_Allocation, efficientList, targetReturns = calculatedResults(meanReturns, covMatrix, riskFreeRate, constraintSet)
+    
+    # Maximum Sharpe Ratio marker
     MaxSRRatio = go.Scatter(
-        name = "Maximum Sharp Ratio",
-        mode = 'markers',
-        x = [maxSR_std],
-        y = [maxSR_Returns],
-        marker = dict(size = 14, color = 'red', line = dict(width=3, color = 'black'))
+        name="Maximum Sharpe Ratio",
+        mode='markers',
+        x=[maxSR_std],
+        y=[maxSR_Returns],
+        marker=dict(size=14, color='red', line=dict(width=3, color='black'))
     )
-    #min SR
+    
+    # Minimum Volatility marker
     MinVol = go.Scatter(
-        name = "Minimum Volatility",
-        mode = 'markers',
-        x = [minVol_std],
-        y = [minVol_Returns],
-        marker = dict(size = 14, color = 'green', line = dict(width=3, color = 'black'))
+        name="Minimum Volatility",
+        mode='markers',
+        x=[minVol_std],
+        y=[minVol_Returns],
+        marker=dict(size=14, color='green', line=dict(width=3, color='black'))
     )
-    #efficient frontier 
-
+    
+    # Efficient Frontier curve (convert variance to volatility by taking sqrt)
     EF_Curve = go.Scatter(
-        name = "Efficient Frontier",
-        mode = 'markers',
-        x = [round(ef_std * 100,2) for ef_std in efficientList],
-        y = [round(target *100,2) for target in tagetReturns],
-        line = dict(color = 'black', width=4, dash='dashdot')
-        )
+        name="Efficient Frontier",
+        mode='lines+markers',  # use lines+markers for a smooth curve
+        x=[round(np.sqrt(ef_var) * 100, 2) for ef_var in efficientList],
+        y=[round(target * 100, 2) for target in targetReturns],
+        line=dict(color='black', width=4, dash='dashdot')
+    )
     
     data = [MaxSRRatio, MinVol, EF_Curve]
-
+    
     layout = go.Layout(
-        title="Portfolio Optimization with the efficient frontier",
+        title="Portfolio Optimization with the Efficient Frontier",
         yaxis=dict(title="Annualized Return (%)"),
         xaxis=dict(title="Annualized Volatility (%)"),
         showlegend=True,
@@ -167,9 +169,9 @@ def EFGraph(meanReturns, covMatrix, riskFreeRate=0, constraintSet=(0,1)):
         width=800,
         height=600
     )
+    
     fig = go.Figure(data=data, layout=layout)
     return fig.show()
-
 
 
 # 5. Main

@@ -44,7 +44,7 @@ Requirements:
 Installation:
 -------------
 1. Clone the repository:
-   git clone https://github.com/yourusername/portfolio-optimization.git
+   git clone https://github.com/mlabib2/portfolio-optimization.git
    cd portfolio-optimization
 
 2. (Optional) Create and activate a virtual environment:

@@ -151,19 +151,25 @@ def EFGraph(meanReturns, covMatrix, riskFreeRate=0, constraintSet=(0,1)):
     
     data = [MaxSRRatio, MinVol, EF_Curve]
 
-    layout = go.layout(
+    layout = go.Layout(
         title="Portfolio Optimization with the efficient frontier",
-        yaxis = "Annualized Return (%)",
-        xaxis = "Annualized Volatility (%)",
-        showlegend = True,
-        legend = dict(
-            x= 0.75,
-            y = 0,
-            traceorder = 'normal',
-            bgcolor = "#E2E2E2",
-            bordercolor = 'black',
-        )
+        yaxis=dict(title="Annualized Return (%)"),
+        xaxis=dict(title="Annualized Volatility (%)"),
+        showlegend=True,
+        legend=dict(
+            x=0.75,
+            y=0,
+            traceorder='normal',
+            bgcolor="#E2E2E2",
+            bordercolor='black',
+            borderwidth=2
+        ),
+        width=800,
+        height=600
     )
+    fig = go.Figure(data=data, layout=layout)
+    return fig.show()
+
 
 
 # 5. Main
@@ -186,7 +192,7 @@ if __name__ == "__main__":
         print(f"User-Defined Portfolio Risk (Annualized):   {round(std*100, 2)}%\n")
 
         # Print the final summary of Max Sharpe & Min Vol results
-        msr_ret, msr_std, msr_alloc, minv_ret, minv_std, minv_alloc, efficientList = calculatedResults(meanReturns, covMatrix)
+        msr_ret, msr_std, msr_alloc, minv_ret, minv_std, minv_alloc, efficientList, tagetReturns = calculatedResults(meanReturns, covMatrix)
 
         print("\n--- Max Sharpe Portfolio ---")
         print(f"Return: {msr_ret}% | Std: {msr_std}%")
@@ -199,6 +205,8 @@ if __name__ == "__main__":
         print(efficientOpt(meanReturns, covMatrix, 0.06))
         print("_______DIVIDER_____")
         print(calculatedResults(meanReturns, covMatrix))
+        EF_Graph = EFGraph(meanReturns, covMatrix)
+
 
 
     else:

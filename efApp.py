@@ -4,6 +4,7 @@ import yfinance as yf
 import pandas as pd
 import scipy as sc
 from scipy.optimize import minimize
+import plotly.graph_objects as go
 
 
 # 1. Data Fetch
@@ -84,27 +85,24 @@ def calculatedResults(meanReturns, covMatrix, riskFreeRate=0, constraintSet=(0,1
     # Max Sharpe
     maxSR_Portfolio = maxSR(meanReturns, covMatrix, riskFreeRate, constraintSet) #use NegativeSR() inside maxSR()
     maxSR_Returns, maxSR_std = portfolioPerformance(maxSR_Portfolio['x'], meanReturns, covMatrix) 
-    maxSR_Returns, maxSR_std = round(maxSR_Returns*100,2), round(maxSR_std*100,2)
     maxSR_Allocation = pd.DataFrame(maxSR_Portfolio['x'], index=meanReturns.index, columns=['allocation'])
     maxSR_Allocation.allocation = [round(i*100,0) for i in maxSR_Allocation.allocation]
 
     # Min Variance
     minVol_Portfolio = minimizeVariance(meanReturns, covMatrix, constraintSet)
     minVol_Returns, minVol_std = portfolioPerformance(minVol_Portfolio['x'], meanReturns, covMatrix)
-    minVol_Returns, minVol_std = round(minVol_Returns*100,2), round(minVol_std*100,2)
+    
     minVol_Allocation = pd.DataFrame(minVol_Portfolio['x'], index=meanReturns.index, columns=['allocation'])
     minVol_Allocation.allocation = [round(i*100,0) for i in minVol_Allocation.allocation]
 
+    #Efficent Frontier
     tagetReturns = np.linspace(minVol_Returns, maxSR_Returns,20)
-    """This line creates an array of 20 target return values that are evenly spaced between the return of the minimum
-      volatility portfolio and the return of the maximum Sharpe ratio portfolio. In other words, if you imagine the
-        returns of your safest portfolio (minVol_Returns) and your highest risk-adjusted portfolio (maxSR_Returns) 
-        as two endpoints, this function splits that interval into 20 equally spaced points. These targets can then be
-          used to construct an efficient frontier by finding the portfolio with minimum risk for each target return."""
     efficientList = []
     for target in tagetReturns:
         efficientList.append(efficientOpt(meanReturns, covMatrix,target)['fun'])
-    return maxSR_Returns, maxSR_std, maxSR_Allocation, minVol_Returns, minVol_std, minVol_Allocation, efficientList
+    maxSR_Returns, maxSR_std = round(maxSR_Returns*100,2), round(maxSR_std*100,2)
+    minVol_Returns, minVol_std = round(minVol_Returns*100,2), round(minVol_std*100,2)
+    return maxSR_Returns, maxSR_std, maxSR_Allocation, minVol_Returns, minVol_std, minVol_Allocation, efficientList, tagetReturns
 
 
 def portfolioReturn(weights, meanReturns, covMatrix):
@@ -121,6 +119,51 @@ def efficientOpt(meanReturns, covMatrix, returnTarget, constraintSet= (0,1)):
     bounds = tuple(constraintSet for asset in range(numAssets))
     effOpt = minimize(portfolioVariance, numAssets*[1./numAssets,], args=args, method='SLSQP', constraints=constraints, bounds=bounds)
     return effOpt
+
+def EFGraph(meanReturns, covMatrix, riskFreeRate=0, constraintSet=(0,1)):
+    # return the graph plotting the min col, max sr, and efficient Frontier
+    maxSR_Returns, maxSR_std, maxSR_Allocation, minVol_Returns, minVol_std, minVol_Allocation, efficientList, tagetReturns = calculatedResults(meanReturns, covMatrix, riskFreeRate, constraintSet)
+    #Max SR 
+    MaxSRRatio = go.Scatter(
+        name = "Maximum Sharp Ratio",
+        mode = 'markers',
+        x = [maxSR_std],
+        y = [maxSR_Returns],
+        marker = dict(size = 14, color = 'red', line = dict(width=3, color = 'black'))
+    )
+    #min SR
+    MinVol = go.Scatter(
+        name = "Minimum Volatility",
+        mode = 'markers',
+        x = [minVol_std],
+        y = [minVol_Returns],
+        marker = dict(size = 14, color = 'green', line = dict(width=3, color = 'black'))
+    )
+    #efficient frontier 
+
+    EF_Curve = go.Scatter(
+        name = "Efficient Frontier",
+        mode = 'markers',
+        x = [round(ef_std * 100,2) for ef_std in efficientList],
+        y = [round(target *100,2) for target in tagetReturns],
+        line = dict(color = 'black', width=4, dash='dashdot')
+        )
+    
+    data = [MaxSRRatio, MinVol, EF_Curve]
+
+    layout = go.layout(
+        title="Portfolio Optimization with the efficient frontier",
+        yaxis = "Annualized Return (%)",
+        xaxis = "Annualized Volatility (%)",
+        showlegend = True,
+        legend = dict(
+            x= 0.75,
+            y = 0,
+            traceorder = 'normal',
+            bgcolor = "#E2E2E2",
+            bordercolor = 'black',
+        )
+    )
 
 
 # 5. Main
@@ -157,7 +200,6 @@ if __name__ == "__main__":
         print("_______DIVIDER_____")
         print(calculatedResults(meanReturns, covMatrix))
 
+
     else:
         print("No stock return data available.")
-
-        

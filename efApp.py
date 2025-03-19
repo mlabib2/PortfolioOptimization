@@ -3,6 +3,8 @@ import datetime as dt
 import yfinance as yf
 import pandas as pd
 import scipy as sc
+from scipy.optimize import minimize
+
 
 # 1. Data Fetch
 def getData(stocks, start, end):
@@ -38,6 +40,8 @@ def portfolioPerformance(weights, meanReturns, covMatrix):
 def portfolioVariance(weights, meanReturns, covMatrix):
     _, std = portfolioPerformance(weights, meanReturns, covMatrix)
     return std**2
+
+
 
 # 3. Sharpe Ratio Functions
 def negativeSR(weights, meanReturns, covMatrix, riskFreeRate=0):
@@ -91,7 +95,33 @@ def calculatedResults(meanReturns, covMatrix, riskFreeRate=0, constraintSet=(0,1
     minVol_Allocation = pd.DataFrame(minVol_Portfolio['x'], index=meanReturns.index, columns=['allocation'])
     minVol_Allocation.allocation = [round(i*100,0) for i in minVol_Allocation.allocation]
 
-    return maxSR_Returns, maxSR_std, maxSR_Allocation, minVol_Returns, minVol_std, minVol_Allocation
+    tagetReturns = np.linspace(minVol_Returns, maxSR_Returns,20)
+    """This line creates an array of 20 target return values that are evenly spaced between the return of the minimum
+      volatility portfolio and the return of the maximum Sharpe ratio portfolio. In other words, if you imagine the
+        returns of your safest portfolio (minVol_Returns) and your highest risk-adjusted portfolio (maxSR_Returns) 
+        as two endpoints, this function splits that interval into 20 equally spaced points. These targets can then be
+          used to construct an efficient frontier by finding the portfolio with minimum risk for each target return."""
+    efficientList = []
+    for target in tagetReturns:
+        efficientList.append(efficientOpt(meanReturns, covMatrix,target)['fun'])
+    return maxSR_Returns, maxSR_std, maxSR_Allocation, minVol_Returns, minVol_std, minVol_Allocation, efficientList
+
+
+def portfolioReturn(weights, meanReturns, covMatrix):
+    return portfolioPerformance(weights, meanReturns, covMatrix)[0] # zero index to get returns without any volatility 
+
+def efficientOpt(meanReturns, covMatrix, returnTarget, constraintSet= (0,1)):
+    # For each returnTarget, we want optimise the portforio for min variance
+    # Given that you want your portfolio to achieve at least a certain return (returnTarget), 
+    # find the allocation (weights) of assets that yields the lowest possible risk (variance)
+    numAssets = len(meanReturns)
+    args = (meanReturns, covMatrix)
+    constraints = ({'type': 'eq', 'fun': lambda x: portfolioReturn(x,meanReturns,covMatrix) - returnTarget},
+                   {'type': 'eq', 'fun': lambda x: np.sum(x) - 1})
+    bounds = tuple(constraintSet for asset in range(numAssets))
+    effOpt = minimize(portfolioVariance, numAssets*[1./numAssets,], args=args, method='SLSQP', constraints=constraints, bounds=bounds)
+    return effOpt
+
 
 # 5. Main
 if __name__ == "__main__":
@@ -113,7 +143,7 @@ if __name__ == "__main__":
         print(f"User-Defined Portfolio Risk (Annualized):   {round(std*100, 2)}%\n")
 
         # Print the final summary of Max Sharpe & Min Vol results
-        msr_ret, msr_std, msr_alloc, minv_ret, minv_std, minv_alloc = calculatedResults(meanReturns, covMatrix)
+        msr_ret, msr_std, msr_alloc, minv_ret, minv_std, minv_alloc, efficientList = calculatedResults(meanReturns, covMatrix)
 
         print("\n--- Max Sharpe Portfolio ---")
         print(f"Return: {msr_ret}% | Std: {msr_std}%")
@@ -122,6 +152,10 @@ if __name__ == "__main__":
         print("\n--- Min Vol Portfolio ---")
         print(f"Return: {minv_ret}% | Std: {minv_std}%")
         print(minv_alloc)
+        print("_______DIVIDER_____")
+        print(efficientOpt(meanReturns, covMatrix, 0.06))
+        print("_______DIVIDER_____")
+        print(calculatedResults(meanReturns, covMatrix))
 
     else:
         print("No stock return data available.")

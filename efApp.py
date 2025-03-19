@@ -78,8 +78,8 @@ def minimizeVariance(meanReturns, covMatrix, constraintSet=(0,1)):
 def calculatedResults(meanReturns, covMatrix, riskFreeRate=0, constraintSet=(0,1)):
     """Return info about the Maximum Sharpe and Minimum Volatility portfolios."""
     # Max Sharpe
-    maxSR_Portfolio = maxSR(meanReturns, covMatrix, riskFreeRate, constraintSet)
-    maxSR_Returns, maxSR_std = portfolioPerformance(maxSR_Portfolio['x'], meanReturns, covMatrix)
+    maxSR_Portfolio = maxSR(meanReturns, covMatrix, riskFreeRate, constraintSet) #use NegativeSR() inside maxSR()
+    maxSR_Returns, maxSR_std = portfolioPerformance(maxSR_Portfolio['x'], meanReturns, covMatrix) 
     maxSR_Returns, maxSR_std = round(maxSR_Returns*100,2), round(maxSR_std*100,2)
     maxSR_Allocation = pd.DataFrame(maxSR_Portfolio['x'], index=meanReturns.index, columns=['allocation'])
     maxSR_Allocation.allocation = [round(i*100,0) for i in maxSR_Allocation.allocation]
